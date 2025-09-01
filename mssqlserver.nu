@@ -23,15 +23,15 @@ export def import-database [
         error make { msg: 'You must specify ONE of either --select-latest or --backup-path options.' }
     }
 
-    mut backup_path_actual = "";
-    if $select_latest {
+    let backup_path_actual = if $select_latest {
         let search_dir = $backup_dir | path join $target_database;
         let backup_file = ls -f $search_dir | sort-by modified --reverse | first;
-        $backup_path_actual = $backup_file.name;
-        if $verbose { print $"($backup_path_actual) was selected for restore." }
+        $backup_file.name;
     } else {
-        $backup_path_actual = $backup_path
+        $backup_path
     }
+
+    if $verbose { print $"($backup_path_actual) was selected for restore." }
 
     let file_list_table = sqlcmd -Q $"RESTORE FILELISTONLY FROM DISK='($backup_path_actual)'" -S $target_server | detect columns --guess | skip 1 | take 2
     let logical_file_name = ($file_list_table | first).LogicalName
