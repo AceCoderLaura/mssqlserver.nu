@@ -12,5 +12,46 @@ export def export-database [target_database: string, target_server: string = "lo
     sqlcmd -Q $"BACKUP DATABASE [($target_database)] TO DISK='($backup_path)' WITH COMPRESSION;" -S $target_server;
 }
 
-export def import-database [] {
+export def import-database [
+    target_database: string,
+    --backup-path: string,
+    --select-latest,
+    --target-server: string = "localhost",
+    --verbose (-v)
+] {
+    if not ($select_latest xor $backup_path != null) {
+        error make { msg: 'You must specify ONE of either --select-latest or --backup-path options.' }
+    }
+
+    mut backup_path_actual = "";
+    if $select_latest {
+        let search_dir = $backup_dir | path join $target_database;
+        let backup_file = ls -f $search_dir | sort-by modified --reverse | first;
+        $backup_path_actual = $backup_file.name;
+        if $verbose { print $"($backup_path_actual) was selected for restore." }
+    } else {
+        $backup_path_actual = $backup_path
+    }
+
+    let file_list_table = sqlcmd -Q $"RESTORE FILELISTONLY FROM DISK='($backup_path_actual)'" -S $target_server | detect columns --guess | skip 1 | take 2
+    let logical_file_name = ($file_list_table | first).LogicalName
+    let logical_log_name = ($file_list_table | last).LogicalName
+
+    if $verbose {
+        print "backup set contained the following files:";
+        print $file_list_table;
+    }
+
+    let new_logical_file_name = $backup_dir | path join $"RAWFILES\($target_database).ldf";
+    let new_logical_log_name = $backup_dir | path join $"RAWFILES\($target_database).mdf";
+
+    let restore_sql = $"ALTER DATABASE [($target_database)] SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+    RESTORE DATABASE [($target_database)] FROM DISK='($backup_path_actual)' WITH
+        REPLACE,
+        MOVE '($logical_file_name)' TO '($new_logical_file_name)',
+        MOVE '($logical_log_name)' TO '($new_logical_log_name)';
+    ALTER DATABASE [($target_database)] SET MULTI_USER;
+    GO";
+
+    sqlcmd -Q $restore_sql -S $target_server;
 }
