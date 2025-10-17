@@ -28,6 +28,7 @@ export def import-database [
         let backup_file = ls -f $search_dir | sort-by modified --reverse | first;
         $backup_file.name;
     } else {
+        if not ($backup_path | path exists) { error make { msg: 'Selected backup file does not exist.' } }
         $backup_path | path expand
     }
 
