@@ -14,7 +14,7 @@ export def export-database [target_database: string, target_server: string = "lo
 
 export def import-database [
     target_database: string,
-    --backup-path: string,
+    --backup-path: path,
     --select-latest,
     --target-server: string = "localhost",
     --verbose (-v)
@@ -28,7 +28,7 @@ export def import-database [
         let backup_file = ls -f $search_dir | sort-by modified --reverse | first;
         $backup_file.name;
     } else {
-        $backup_path
+        $backup_path | path expand
     }
 
     if $verbose { print $"($backup_path_actual) was selected for restore." }
