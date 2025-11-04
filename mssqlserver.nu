@@ -43,8 +43,11 @@ export def import-database [
         print $file_list_table;
     }
 
-    let new_logical_file_name = $backup_dir | path join $"RAWFILES\\($target_database).ldf";
-    let new_logical_log_name = $backup_dir | path join $"RAWFILES\\($target_database).mdf";
+	let rawfiles_dir = $backup_dir | path join "RAWFILES";
+	mkdir $rawfiles_dir
+	
+    let new_logical_file_name = $rawfiles_dir | path join $"($target_database).ldf";
+    let new_logical_log_name = $rawfiles_dir | path join $"($target_database).mdf";
 
     let restore_sql = $"ALTER DATABASE [($target_database)] SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
     RESTORE DATABASE [($target_database)] FROM DISK='($backup_path_actual)' WITH
