@@ -1,7 +1,7 @@
 # utilities for backing up and restoring MS SQL Server databases
 # (ported from https://github.com/AceCoderLaura/LaurasToolbox/blob/master/MSSQLServer.psm1)
 
-const backup_dir = "C:\\Temp\\DBBackups\\"
+const backup_dir = "C:\\Databases"
 
 export def export-database [target_database: string, target_server: string = "localhost"] {
     let timestamp = date now | date to-timezone UTC | format date "%d%m%y_%H%M";
