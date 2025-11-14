@@ -4,7 +4,7 @@
 const backup_dir = "C:\\Databases"
 
 export def export-database [target_database: string, target_server: string = "localhost"] {
-    let timestamp = date now | date to-timezone UTC | format date "%d%m%y_%H%M";
+    let timestamp = date now | date to-timezone UTC | format date "_%Y_%m_%d_%H%M";
     let filename = $target_database + $timestamp + ".bak";
     let target_db_backup_directory = $backup_dir | path join $target_database;
     mkdir $target_db_backup_directory;
